@@ -7,10 +7,10 @@ const readline = require('readline').createInterface({
       output: process.stdout
 });
 
-// Credenciales: TODO sacar de fichero config
-const username = "test@test.com",
-    password = "12341234",
-    partial_phone = "2531";
+const credentials = require('./credentials');
+const username = credentials.username,
+    password = credentials.password,
+    partial_phone = credentials.partial_phone;
 
 
 const base_url = "https://account.booking.com",
@@ -94,6 +94,7 @@ const sms_verification = (login_response) => {
     const verification_required = true;  //TODO revisar en la respuesta si es necesaria la verificación
 
     if(!verification_required) {
+        debugger; // c -> repl
         return Promise.resolve(login_response); // TODO redirigir a la home
     }
 
@@ -132,24 +133,40 @@ const sms_verification = (login_response) => {
 
 
 const parse_home_page = (response) => {
-    const html = response.body;
-    // TODO get session from request url [ses param]
+    const html = response.body,
+        query = response.request.uri.query;
+
+    const params = query.split('&')
+        .map((q) => {
+            const key_val = q.split('=');
+            return {
+                key: key_val[0],
+                val: key_val[1]
+            }
+        }),
+        session_param = params.find((p) => p.key == "ses");
+
+    const token_regex = /var token[ ]+= '([^']+)'/,
+        token_re = html.match(re_token);
 
     return new Promise((resolve, reject) => {
-        const token_regex = /var token[ ]+= '([^']+)'/,
-            token_re = html.match(re_token);
-
         if(!token_re) {
             reject("Token not found in home page!");
             return;
         }
+        if(!session_param) {
+            reject("Session not found in home page!");
+            return;
+        }
+
         resolve({
-            token: token_re[1]
+            token: token_re[1],
+            session: session_param.val
         });
     });
 };
 
-const get_card_list = () => {
+const init_process = (authorization) => {
     //TODO
 };
 
@@ -161,7 +178,7 @@ request.get(home_url)
     .then(do_login)
     .then(sms_verification)
     .then(parse_home_page)
-    .then(get_card_list)
+    .then(init_process)
     .catch((err) => {
         console.log("Something was wrong!");
         console.log(err);
