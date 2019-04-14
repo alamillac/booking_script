@@ -65,8 +65,8 @@ const do_login = (op_token) => {
     return request(request_options)
         .then((response) => {
             // login second step
-            request_options["uri"] = base_url + "/account/sign-in/password";
-            request_options["body"] = {
+            request_options.uri = base_url + "/account/sign-in/password";
+            request_options.body = {
                 "login_name": username,
                 "password": password,
                 "client_id": "", //TODO ver de donde sale esto
@@ -98,18 +98,18 @@ const sms_verification = (login_response) => {
         return Promise.resolve(login_response); // TODO redirigir a la home
     }
 
-    const authorization_token = login_response["response"]["authorization_token"],
-        op_token = login_response["op_token"],
-        phones = login_response["response"]["phones_info"]["sms"];
+    const authorization_token = login_response.response.authorization_token,
+        op_token = login_response.op_token,
+        phones = login_response.response.phones_info.sms;
 
-    const phone_info = phones.find((phone) => phone["masked"].indexOf(partial_phone) != -1);
+    const phone_info = phones.find((phone) => phone.masked.indexOf(partial_phone) != -1);
 
     const request_options = Object.assign({}, json_options, {
         uri: base_url + "/account/send/2fa-pin",
         body: {
             "type": "sms",
             "authorization_token": authorization_token,
-            "phone_id": phone_info["hash"],
+            "phone_id": phone_info.hash,
             "op_token": op_token
         }
     });
@@ -118,8 +118,8 @@ const sms_verification = (login_response) => {
     return request(request_options)
         .then(get_sms_second_factor)
         .then((second_factor) => {
-            request_options["uri"] = base_url + "/account/sign-in/2fa-pin"
-            request_options["body"] = {
+            request_options.uri = base_url + "/account/sign-in/2fa-pin"
+            request_options.body = {
                 "type": "sms",
                 "authorization_token": authorization_token,
                 "second_factor": second_factor,
@@ -128,7 +128,7 @@ const sms_verification = (login_response) => {
             console.log("Request: " + request_options.uri);
             return request(request_options);
         })
-        .then((response) => request.get({uri: response["redirect_uri"], resolveWithFullResponse: true}));
+        .then((response) => request.get({uri: response.redirect_uri, resolveWithFullResponse: true}));
 };
 
 
