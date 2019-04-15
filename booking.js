@@ -7,7 +7,8 @@ const readline = require('readline').createInterface({
       output: process.stdout
 });
 
-const base_url = "https://account.booking.com",
+const login_url = "https://admin.booking.com",
+    base_url = "https://account.booking.com",
     json_headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0",
         "Accept": "*/*",
@@ -30,34 +31,38 @@ function login(credentials) {
     const get_token = (html) => {
         console.log("Getting token");
         return new Promise((resolve, reject) => {
-            const token_regex = /\"op_token\":(\w+),/,  //TODO probar con token != null => Ex: "TOKEN"
-                token_re = html.match(token_regex);
+            const token_regex = /\"op_token\":\"([^"]+)\"/,
+                token_re = html.match(token_regex),
+                client_id_regex = /\"client_id\":\"([^"]+)\"/,
+                client_id_re = html.match(client_id_regex);
 
             if(!token_re) {
                 reject("Token not found!");
                 return;
             }
 
-            const token = token_re[1];
-            if(token === "null") {
-                console.log("Null token");
-                resolve("");
+            if(!client_id_re) {
+                reject("Client_id not found!");
                 return;
             }
-            console.log("Token found " + token);
-            resolve(token);
+
+            const op_token = token_re[1],
+                client_id = client_id_re[1];
+            console.log("Token found " + op_token);
+            console.log("Client_id found " + client_id);
+            resolve({op_token: op_token, client_id: client_id});
         });
     };
 
 
-    const do_login = (op_token) => {
+    const do_login = (login_params) => {
         console.log("Init login");
         // login first step
         const request_options = Object.assign({}, json_options, {
             uri: base_url + "/account/sign-in/login_name",
             body: {
                 "login_name": username,
-                "op_token": op_token
+                "op_token": login_params.op_token
             },
         });
 
@@ -69,16 +74,16 @@ function login(credentials) {
                 request_options.body = {
                     "login_name": username,
                     "password": password,
-                    "client_id": "", //TODO ver de donde sale esto
+                    "client_id": login_params.client_id,
                     "state": "",
                     "code_challenge": "",
                     "code_challenge_method": "",
-                    "op_token": op_token
+                    "op_token": login_params.op_token
                 };
                 console.log("Request: " + request_options.uri);
                 return request(request_options);
             })
-            .then((response) => Promise.resolve({response: response, op_token: op_token}));
+            .then((response) => Promise.resolve({response: response, op_token: login_params.op_token}));
     };
 
 
@@ -166,8 +171,7 @@ function login(credentials) {
         });
     };
 
-    const home_url = base_url + "/";
-    return request.get(home_url)
+    return request.get(login_url)
         .then(get_token)
         .then(do_login)
         .then(sms_verification)
