@@ -1,12 +1,22 @@
 import { loginFirstStep, loginSecondStep } from './login';
-import request from 'request-promise';
+import axios from 'axios';
 
 
 function Booking(credentials) {
-    let state = {
+    const state = {
             tokens: {}
         },
-        client = request.defaults({jar: true});
+        client = axios.create({
+            withCredentials: true,
+            timeout: 2000,
+            headers: {
+                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0",
+                "Accept": "*/*",
+                "content-type": "application/json",
+                "x-requested-with": "XMLHttpRequest",
+                "origin": "https://account.booking.com"
+            },
+        });
 
     return {
         login: async (options) => {
