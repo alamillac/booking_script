@@ -9,7 +9,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && npm run build:cjs",
-    "build:cjs": "parcel build src/bkapi/index.js",
+    "build:cjs": "parcel build src/bkapi/index.js --target node",
     "test": "mocha --require @babel/register 'tests/**/*.spec.js'"
   },
   "author": "AFL",
