@@ -1,13 +1,54 @@
 {
-  "name": "booking",
-  "version": "1.0.0",
+  "name": "bkapi",
+  "version": "0.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rimraf dist",
+    "build": "npm run clean && npm run build:cjs",
+    "build:cjs": "parcel build src/bkapi/index.js",
+    "test": "mocha --require @babel/register 'tests/**/*.spec.js'"
   },
-  "author": "",
+  "author": "AFL",
   "license": "ISC",
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ],
+    "plugins": [
+      [
+        "module-resolver",
+        {
+          "root": [
+            "./src"
+          ]
+        }
+      ]
+    ]
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.3.4",
+    "@babel/node": "^7.0.0",
+    "@babel/polyfill": "^7.0.0",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/register": "^7.0.0",
+    "@babel/runtime": "7.0.0-beta.55",
+    "babel-plugin-module-resolver": "^3.2.0",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "parcel-bundler": "^1.12.3"
+  },
   "dependencies": {
     "request": "^2.88.0",
     "request-promise": "^4.2.4"

@@ -1,2 +1,3 @@
 node_modules
-credentials.js
+tests/develop.spec.js
+.cache
