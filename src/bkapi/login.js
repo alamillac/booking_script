@@ -1,10 +1,11 @@
-const login_url = "https://admin.booking.com",
-    base_url = "https://account.booking.com";
+const base_url = "https://account.booking.com";
 
 
 async function loginFirstStep(credentials, request) {
     const { username, password, partialPhone } = credentials;
 
+    const login_url = "https://admin.booking.com";
+    console.log("Request: " + login_url);
     let response = await request.get(login_url),
         html = response.data;
 
@@ -31,7 +32,7 @@ async function loginFirstStep(credentials, request) {
     // Do login
     console.log("Init login");
     // login first step
-    const request_options = {
+    let request_options = {
         url: base_url + "/account/sign-in/login_name",
         data: {
             "login_name": username,
@@ -44,16 +45,19 @@ async function loginFirstStep(credentials, request) {
     response = await request(request_options);
 
     // login second step
-    request_options.url = base_url + "/account/sign-in/password";
-    request_options.data = {
-        "login_name": username,
-        "password": password,
-        "client_id": client_id,
-        "state": "",
-        "code_challenge": "",
-        "code_challenge_method": "",
-        "op_token": opToken
-    };
+    request_options = {
+        url: base_url + "/account/sign-in/password",
+        data: {
+            "login_name": username,
+            "password": password,
+            "client_id": client_id,
+            "state": "",
+            "code_challenge": "",
+            "code_challenge_method": "",
+            "op_token": opToken
+        },
+        method: "POST"
+    }
     console.log("Request: " + request_options.url);
     response = await request(request_options);
     const phones = response.data.phones_info.sms,
@@ -63,17 +67,10 @@ async function loginFirstStep(credentials, request) {
         phoneHash = phoneInfo.hash;
 
     console.log("Init sms verification");
-    const tokens = {opToken, phoneHash, authorizationToken},
-        smsRequired = true; //TODO revisar en la respuesta si es necesaria la verificación
-    return { smsRequired, tokens };
-}
+    //TODO revisar en la respuesta si es necesaria la verificación
 
-
-async function loginSecondStep(options, request) {
-    const { smsToken, authorizationToken, opToken, phoneHash } = options;
-
-    // SMS verification
-    const request_options = {
+    // Send sms if needed
+    request_options = {
         url: base_url + "/account/send/2fa-pin",
         data: {
             "type": "sms",
@@ -84,22 +81,42 @@ async function loginSecondStep(options, request) {
         method: "POST"
     };
     console.log("Request: " + request_options.url);
-    let response = await request(request_options);
+    response = await request(request_options);
 
-    request_options.url = base_url + "/account/sign-in/2fa-pin"
-    request_options.data = {
-        "type": "sms",
-        "authorization_token": authorizationToken,
-        "second_factor": smsToken,
-        "op_token": opToken
+    const tokens = {opToken, authorizationToken},
+        smsRequired = true;
+    return { smsRequired, tokens };
+}
+
+
+async function loginSecondStep(options, request) {
+    const { smsToken, authorizationToken, opToken } = options;
+
+    // SMS verification
+    const request_options = {
+        url: base_url + "/account/sign-in/2fa-pin",
+        data: {
+            "type": "sms",
+            "authorization_token": authorizationToken,
+            "second_factor": smsToken,
+            "op_token": opToken
+        },
+        method: "POST"
     }
     console.log("Request: " + request_options.url);
-    response = await request(request_options);
-    response = await request.get(response.data.redirect_uri);
+    let response = await request(request_options);
+
+    // Redirect to home
+    const homeUrl = response.data.redirect_uri;
+    console.log("Request: " + homeUrl);
+    response = await request.get(homeUrl);
 
     // Parse Home page
+    console.log("Getting session and token from home page");
     const html = response.data,
         query = response.request.url.query; //FIXME
+
+    console.log("Debug: query" + query); //FIXME delete
 
     const params = query.split('&')
         .map((q) => {
@@ -125,6 +142,8 @@ async function loginSecondStep(options, request) {
         token: token_re[1],
         session: sessionParam.val
     };
+    console.log("Debug Tokens: " + tokens); //FIXME delete
+    console.log("Tokens found");
    return { tokens };
 }
 

@@ -38,4 +38,6 @@ async function doLogin() {
         response = await booking.login({smsToken});
     }
 }
+
+doLogin()
 ```
