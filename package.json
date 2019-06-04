@@ -10,7 +10,8 @@
     "clean": "rimraf dist",
     "build": "npm run clean && npm run build:cjs",
     "build:cjs": "parcel build src/bkapi/index.js --target node",
-    "test": "mocha --require @babel/register 'tests/**/*.spec.js'"
+    "test": "mocha --require @babel/register 'tests/**/*.spec.js'",
+    "sandbox": "npx --node-arg=--inspect babel-node sandbox.js"
   },
   "author": "AFL",
   "license": "ISC",
@@ -25,6 +26,8 @@
         }
       ]
     ],
+    "sourceMaps": "inline",
+    "retainLines": true,
     "plugins": [
       [
         "module-resolver",
@@ -50,6 +53,7 @@
     "parcel-bundler": "^1.12.3"
   },
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.1",
+    "axios-cookiejar-support": "^0.4.2"
   }
 }
