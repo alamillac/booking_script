@@ -2,3 +2,4 @@ node_modules
 tests/develop.spec.js
 .cache
 .vscode
+sandbox.js

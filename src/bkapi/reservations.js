@@ -4,7 +4,7 @@ async function searchReservations(options, session, request) {
     const { dateFrom, dateTo, hotelAccountId } = options;
     const typeOfDates = options.typeOfDates || 'arrival';
 
-    request_options = {
+    const request_options = {
         url: `${base_url}/fresa/extranet/group/reservations/search_reservations?lang=xu&ses=${session}`,
         method: 'POST',
         headers: {

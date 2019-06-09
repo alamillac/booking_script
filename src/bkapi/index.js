@@ -27,8 +27,8 @@ function Booking(credentials) {
         });
 
     return {
-        login: async options => {
-            if (options && options.smsToken) {
+        login: async ({ smsToken = null }) => {
+            if (smsToken) {
                 const completeOptions = Object.assign(
                     {},
                     options,

@@ -3,7 +3,9 @@
 ## Getting Started
 
 ### Installing
+
 npm:
+
 ```
 $ npm install bkapi
 ```
@@ -11,6 +13,7 @@ $ npm install bkapi
 ### Examples
 
 #### Login
+
 ```js
 import { Booking } from 'bkapi';
 import readline from 'readline';
@@ -26,18 +29,24 @@ function getSms() {
     });
 }
 
-async function doLogin() {
-    const username = "USERNAME",
-        password = "PASSWORD",
-        partialPhone = "1234";
+async function main() {
+    const username = 'USERNAME',
+        password = 'PASSWORD',
+        partialPhone = '1234',
+        hotelId = 7079999;
 
-    const booking = Booking({username, password, partialPhone});
+    const booking = Booking({ username, password, partialPhone });
     let response = await booking.login();
-    if(response.smsRequired === true) {
+    if (response.smsRequired === true) {
         const smsToken = await getSms();
-        response = await booking.login({smsToken});
+        response = await booking.login({ smsToken });
+        const reservations = await booking.searchReservations({
+            dateFrom: '2019-04-01',
+            dateTo: '2019-06-05',
+            hotelAccountId: hotelId
+        });
     }
 }
 
-doLogin()
+main();
 ```
