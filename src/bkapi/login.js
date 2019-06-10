@@ -1,14 +1,6 @@
 const base_url = 'https://account.booking.com';
 
-async function loginFirstStep(credentials, request) {
-    const { username, password, partialPhone } = credentials;
-
-    const login_url = 'https://admin.booking.com';
-    console.log('Request: ' + login_url);
-    let response = await request.get(login_url),
-        html = response.data;
-
-    // Get Token
+function getAuthToken(html) {
     console.log('Getting token');
     const token_regex = /\"op_token\":\"([^"]+)\"/,
         token_re = html.match(token_regex),
@@ -23,13 +15,15 @@ async function loginFirstStep(credentials, request) {
         throw new Error('Client_id not found!');
     }
 
-    const opToken = token_re[1],
-        client_id = client_id_re[1];
-    console.log('Token found ' + opToken);
-    console.log('Client_id found ' + client_id);
+    return {
+        opToken: token_re[1],
+        clientId: client_id_re[1]
+    };
+}
 
-    // Do login
-    console.log('Init login');
+async function signIn(options, request) {
+    const { username, opToken, password, clientId } = options;
+
     // login first step
     let request_options = {
         url: base_url + '/account/sign-in/login_name',
@@ -41,7 +35,7 @@ async function loginFirstStep(credentials, request) {
     };
 
     console.log('Request: ' + request_options.url);
-    response = await request(request_options);
+    let response = await request(request_options);
 
     // login second step
     request_options = {
@@ -49,7 +43,7 @@ async function loginFirstStep(credentials, request) {
         data: {
             login_name: username,
             password: password,
-            client_id: client_id,
+            client_id: clientId,
             state: '',
             code_challenge: '',
             code_challenge_method: '',
@@ -59,8 +53,28 @@ async function loginFirstStep(credentials, request) {
     };
     console.log('Request: ' + request_options.url);
     response = await request(request_options);
-    const phones = response.data.phones_info.sms,
-        authorizationToken = response.data.authorization_token;
+    return response.data;
+}
+
+async function loginFirstStep(credentials, request) {
+    const { username, password, partialPhone } = credentials;
+
+    const login_url = 'https://admin.booking.com';
+    console.log('Request: ' + login_url);
+    let response = await request.get(login_url),
+        html = response.data;
+
+    // Get Token
+    const { opToken, clientId } = getAuthToken(html);
+
+    // Do login
+    console.log('Init login');
+    const signInResponse = await signIn(
+        { username, opToken, password, clientId },
+        request
+    );
+    const phones = signInResponse.phones_info.sms,
+        authorizationToken = signInResponse.authorization_token;
 
     const phoneInfo = phones.find(
             phone => phone.masked.indexOf(partialPhone) != -1
@@ -71,7 +85,7 @@ async function loginFirstStep(credentials, request) {
     //TODO revisar en la respuesta si es necesaria la verificación
 
     // Send sms if needed
-    request_options = {
+    const request_options = {
         url: base_url + '/account/send/2fa-pin',
         data: {
             type: 'sms',
@@ -143,4 +157,4 @@ async function loginSecondStep(options, request) {
     return { tokens };
 }
 
-export { loginFirstStep, loginSecondStep };
+export { loginFirstStep, loginSecondStep, signIn, getAuthToken };

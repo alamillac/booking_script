@@ -1,5 +1,9 @@
 import { loginFirstStep, loginSecondStep } from './login';
-import { searchReservations } from './reservations';
+import {
+    searchReservations,
+    getCardFromReservation
+} from './reservations';
+import { listProperties } from './properties';
 import axios from 'axios';
 
 import axiosCookieJarSupport from 'axios-cookiejar-support';
@@ -15,7 +19,7 @@ function Booking(credentials) {
         client = axios.create({
             jar: cookieJar,
             withCredentials: true,
-            timeout: 2000,
+            timeout: 10000,
             headers: {
                 'User-Agent':
                     'Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0',
@@ -27,8 +31,8 @@ function Booking(credentials) {
         });
 
     return {
-        login: async ({ smsToken = null }) => {
-            if (smsToken) {
+        login: async options => {
+            if (options && options.smsToken) {
                 const completeOptions = Object.assign(
                     {},
                     options,
@@ -54,6 +58,27 @@ function Booking(credentials) {
             }
             return searchReservations(
                 options,
+                state.tokens.session,
+                client
+            );
+        },
+        listProperties: async options => {
+            if (!state.tokens.session) {
+                throw new Error('Login required');
+            }
+            return listProperties(
+                options,
+                state.tokens.session,
+                client
+            );
+        },
+        getCardFromReservation: async options => {
+            if (!state.tokens.session) {
+                throw new Error('Login required');
+            }
+            return getCardFromReservation(
+                options,
+                credentials,
                 state.tokens.session,
                 client
             );
