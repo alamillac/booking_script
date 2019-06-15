@@ -150,11 +150,25 @@ async function loginSecondStep(options, request) {
         throw new Error('Session not found in home page!');
     }
 
-    const tokens = {
+    console.log('Session found');
+    return {
         session: sessionParam.val
     };
-    console.log('Tokens found');
-    return { tokens };
 }
 
-export { loginFirstStep, loginSecondStep, signIn, getAuthToken };
+async function login(credentials, getSms, request) {
+    const { smsRequired, tokens } = await loginFirstStep(
+        credentials,
+        request
+    );
+    if (!smsRequired) {
+        return tokens;
+    }
+
+    const smsToken = await getSms();
+    tokens.smsToken = smsToken;
+
+    return await loginSecondStep(tokens, request);
+}
+
+export { login, signIn, getAuthToken };

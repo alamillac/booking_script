@@ -1,4 +1,4 @@
-import { loginFirstStep, loginSecondStep } from './login';
+import { login } from './login';
 import {
     searchReservations,
     getCardFromReservation
@@ -12,9 +12,9 @@ import tough from 'tough-cookie';
 axiosCookieJarSupport(axios);
 const cookieJar = new tough.CookieJar();
 
-function Booking(credentials) {
+function Booking(credentials, getSmsfn) {
     const state = {
-            tokens: {}
+            session: null
         },
         client = axios.create({
             jar: cookieJar,
@@ -32,56 +32,46 @@ function Booking(credentials) {
 
     return {
         login: async options => {
-            if (options && options.smsToken) {
-                const completeOptions = Object.assign(
-                    {},
-                    options,
-                    state.tokens
-                );
-                const { tokens } = await loginSecondStep(
-                    completeOptions,
-                    client
-                );
-                state.tokens = tokens;
-                return { smsRequired: false };
-            }
-            const { smsRequired, tokens } = await loginFirstStep(
-                credentials,
+            const { session } = await login(
+                options,
+                getSmsfn,
                 client
             );
-            state.tokens = tokens;
-            return { smsRequired };
+            state.session = session;
+            return session;
         },
         searchReservations: async options => {
-            if (!state.tokens.session) {
+            if (!state.session) {
                 throw new Error('Login required');
             }
-            return searchReservations(
-                options,
-                state.tokens.session,
-                client
-            );
+            return searchReservations(options, state.session, client);
         },
         listProperties: async options => {
-            if (!state.tokens.session) {
+            if (!state.session) {
                 throw new Error('Login required');
             }
-            return listProperties(
-                options,
-                state.tokens.session,
-                client
-            );
+            return listProperties(options, state.session, client);
         },
-        getCardFromReservation: async options => {
-            if (!state.tokens.session) {
+        getCardsFromReservations: async optionsList => {
+            if (!state.session) {
                 throw new Error('Login required');
             }
-            return getCardFromReservation(
-                options,
-                credentials,
-                state.tokens.session,
-                client
-            );
+            if (optionsList.length == 0) {
+                return [];
+            }
+            const response = [];
+            for (let options of optionsList) {
+                // We can't do this on parallel
+                const cardResponse = await getCardFromReservation(
+                    options,
+                    credentials,
+                    state.session,
+                    getSmsfn,
+                    client
+                );
+                response.push(cardResponse);
+            }
+            return response;
         }
     };
 }

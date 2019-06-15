@@ -44,6 +44,7 @@ async function getCardFromReservation(
     options,
     credentials,
     session,
+    getSms,
     request
 ) {
     const { hotelId, reservationId } = options;
@@ -80,6 +81,8 @@ async function getCardFromReservation(
         { username, opToken, password, clientId },
         request
     );
+
+    //TODO 2FA getSms
 
     // Redirect to home
     request_options = {
