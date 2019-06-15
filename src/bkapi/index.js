@@ -31,9 +31,9 @@ function Booking(credentials, getSmsfn) {
         });
 
     return {
-        login: async options => {
+        login: async () => {
             const { session } = await login(
-                options,
+                credentials,
                 getSmsfn,
                 client
             );
