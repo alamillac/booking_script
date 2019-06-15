@@ -30,34 +30,34 @@ function Booking(credentials, getSmsfn) {
             }
         });
 
+    async function doLogin() {
+        const { session } = await login(
+            credentials,
+            getSmsfn,
+            client
+        );
+        return session;
+    }
+
     return {
-        login: async () => {
-            const { session } = await login(
-                credentials,
-                getSmsfn,
-                client
-            );
-            state.session = session;
-            return session;
-        },
         searchReservations: async options => {
             if (!state.session) {
-                throw new Error('Login required');
+                state.session = await doLogin();
             }
             return searchReservations(options, state.session, client);
         },
         listProperties: async options => {
             if (!state.session) {
-                throw new Error('Login required');
+                state.session = await doLogin();
             }
             return listProperties(options, state.session, client);
         },
         getCardsFromReservations: async optionsList => {
-            if (!state.session) {
-                throw new Error('Login required');
-            }
             if (optionsList.length == 0) {
                 return [];
+            }
+            if (!state.session) {
+                state.session = await doLogin();
             }
             const response = [];
             for (let options of optionsList) {

@@ -39,8 +39,6 @@ async function main() {
         { username, password, partialPhone },
         getSms
     );
-    await booking.login();
-
     // Reservations
     const reservationsResponse = await booking.searchReservations({
         dateFrom: '2019-06-01',
@@ -52,7 +50,6 @@ async function main() {
     );
 
     const reservationsId = reservationsResponse.data.reservations.map(r => ({hotelId: r.hotel_id, reservationId: r.id}))
-
     const cardDetails = await booking.getCardsFromReservations(reservationsId);
     console.log('CardDetails: ' + JSON.stringify(cardDetails));
     }
