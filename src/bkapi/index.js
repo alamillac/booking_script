@@ -8,11 +8,22 @@ import axios from 'axios';
 
 import axiosCookieJarSupport from 'axios-cookiejar-support';
 import tough from 'tough-cookie';
+import cookieStore from 'tough-cookie-file-store';
 
 axiosCookieJarSupport(axios);
-const cookieJar = new tough.CookieJar();
 
-function Booking(credentials, getSmsfn) {
+function Booking(
+    credentials,
+    getSmsfn,
+    //cookiePath = '/tmp/bookingCookie.json'
+    cookiePath = null
+) {
+    let cookieJar;
+    if (cookiePath) {
+        cookieJar = new tough.CookieJar(new cookieStore(cookiePath));
+    } else {
+        cookieJar = new tough.CookieJar();
+    }
     const state = {
             session: null
         },
