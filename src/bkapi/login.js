@@ -86,9 +86,15 @@ async function loginFirstStep(credentials, request) {
                     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
             }
         };
-        console.log('Request: ' + request_options.url);
-        response = await request(request_options);
+        try {
+            console.log('Request: ' + request_options.url);
+            response = await request(request_options);
+        } catch (e) {
+            console.log(e);
+            throw new Error('Error in login redirect');
+        }
         html = response.data;
+        //TODO get session from html
         //WIP
         throw new Error('Not implemented');
     }

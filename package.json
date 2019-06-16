@@ -1,62 +1,61 @@
 {
-  "name": "bkapi",
-  "version": "0.0.4",
-  "description": "",
-  "main": "dist/index.js",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && npm run build:cjs",
-    "build:cjs": "parcel build src/bkapi/index.js --target node",
-    "test": "mocha --require @babel/register 'tests/**/*.spec.js'",
-    "sandbox": "npx --node-arg=--inspect babel-node sandbox.js"
-  },
-  "author": "AFL",
-  "license": "ISC",
-  "babel": {
-    "presets": [
-      [
-        "@babel/preset-env",
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
+    "name": "bkapi",
+    "version": "0.0.4",
+    "description": "",
+    "main": "dist/index.js",
+    "files": [
+        "dist"
     ],
-    "sourceMaps": "inline",
-    "retainLines": true,
-    "plugins": [
-      [
-        "module-resolver",
-        {
-          "root": [
-            "./src"
-          ]
-        }
-      ]
-    ]
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.1.2",
-    "@babel/core": "^7.3.4",
-    "@babel/node": "^7.0.0",
-    "@babel/polyfill": "^7.0.0",
-    "@babel/preset-env": "^7.3.4",
-    "@babel/register": "^7.0.0",
-    "@babel/runtime": "7.0.0-beta.55",
-    "babel-plugin-module-resolver": "^3.2.0",
-    "chai": "^4.2.0",
-    "mocha": "^5.2.0",
-    "parcel-bundler": "^1.12.3"
-  },
-  "dependencies": {
-    "axios": "^0.18.1",
-    "axios-cookiejar-support": "^0.4.2",
-    "cheerio": "^1.0.0-rc.3",
-    "form-data": "^2.3.3",
-    "tough-cookie-file-store": "^1.2.0"
-  }
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "npm run clean && npm run build:cjs",
+        "build:cjs": "parcel build src/bkapi/index.js --target node",
+        "test": "mocha --require @babel/register 'tests/**/*.spec.js'",
+        "sandbox": "npx --node-arg=--inspect babel-node sandbox.js"
+    },
+    "author": "AFL",
+    "license": "ISC",
+    "babel": {
+        "presets": [
+            [
+                "@babel/preset-env",
+                {
+                    "targets": {
+                        "node": "current"
+                    }
+                }
+            ]
+        ],
+        "sourceMaps": "inline",
+        "retainLines": true,
+        "plugins": [
+            [
+                "module-resolver",
+                {
+                    "root": [
+                        "./src"
+                    ]
+                }
+            ]
+        ]
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.1.2",
+        "@babel/core": "^7.3.4",
+        "@babel/node": "^7.0.0",
+        "@babel/polyfill": "^7.0.0",
+        "@babel/preset-env": "^7.3.4",
+        "@babel/register": "^7.0.0",
+        "@babel/runtime": "7.0.0-beta.55",
+        "babel-plugin-module-resolver": "^3.2.0",
+        "chai": "^4.2.0",
+        "mocha": "^5.2.0",
+        "parcel-bundler": "^1.12.3"
+    },
+    "dependencies": {
+        "axios": "^0.18.1",
+        "axios-cookiejar-support": "^0.4.2",
+        "cheerio": "^1.0.0-rc.3",
+        "tough-cookie-file-store": "^1.2.0"
+    }
 }

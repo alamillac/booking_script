@@ -1,8 +1,13 @@
 import { signIn, getAuthToken } from './login';
 import cheerio from 'cheerio';
-import FormData from 'form-data';
 
 const base_url = 'https://admin.booking.com';
+
+function makeFormPost(data) {
+    return Object.entries(data)
+        .map(([key, val]) => `${key}=${val}`)
+        .join('&');
+}
 
 function getAmount(strAmount) {
     return parseFloat(strAmount.replace(/[^0-9.]/g, ''));
@@ -10,6 +15,16 @@ function getAmount(strAmount) {
 
 function getCurrency(strAmount) {
     return strAmount.replace(/[0-9.]/g, '');
+}
+
+function getInputs($form) {
+    const inputs = {},
+        $inputs = $form.find('input');
+
+    $inputs.each((i, el) => {
+        inputs[el.attribs.name] = el.attribs.value;
+    });
+    return inputs;
 }
 
 async function searchReservations(options, session, request) {
@@ -105,23 +120,25 @@ async function getCardFromReservation(
         let $ = cheerio.load(html),
             $form = $('form#select_phone_number'),
             urlAction = $form.attr('action'),
-            formData = new FormData();
+            inputs = getInputs($form),
+            formData = {
+                dest: inputs.dest,
+                check_pin_auth: inputs.check_pin_auth,
+                message_type: 'sms',
+                ask_pin: '',
+                phone_id: '',
+                phone_id_call: '',
+                phone_id_sms: ''
+            };
 
-        formData.append('dest', $form.find('input[name=dest]').val());
-        formData.append(
-            'check_pin_auth',
-            $form.find('input[name=check_pin_auth]').val()
-        );
-        formData.append('message_type', 'sms');
-        formData.append('ask_pin', '');
         $form.find('option').each((i, el) => {
             const $phoneOption = $(el);
             const phoneNumber = $phoneOption.text();
             if (phoneNumber.includes(partialPhone)) {
                 const phoneId = $phoneOption.val();
-                formData.append('phone_id', phoneId);
-                formData.append('phone_id_call', phoneId);
-                formData.append('phone_id_sms', phoneId);
+                formData.phone_id = phoneId;
+                formData.phone_id_call = phoneId;
+                formData.phone_id_sms = phoneId;
             }
         });
         request_options = {
@@ -131,8 +148,15 @@ async function getCardFromReservation(
             headers: {
                 Accept:
                     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'content-type': 'application/x-www-form-urlencoded'
-            }
+                'content-type': 'application/x-www-form-urlencoded',
+                Referer: secureBaseUrl + response.request.path
+            },
+            transformRequest: [
+                (data, headers) => {
+                    delete headers.common['x-requested-with'];
+                    return makeFormPost(data);
+                }
+            ]
         };
         console.log('Request: ' + request_options.url);
         response = await request(request_options); // send sms token
@@ -143,25 +167,18 @@ async function getCardFromReservation(
         $form = $('form#enter_security_pin');
         urlAction = $form.attr('action');
         const smsToken = await getSms();
-        formData = new FormData();
-        formData.append('ask_pin', smsToken);
-        formData.append(
-            'hotel_id',
-            $form.find('input[name=hotel_id]').val()
-        );
-        formData.append('ses', $form.find('input[name=ses]').val());
-        formData.append(
-            'account_id',
-            $form.find('input[name=account_id]').val()
-        );
-        formData.append('dest', $form.find('input[name=dest]').val());
-        formData.append('pulse', 0);
-        formData.append('pcip', '');
-        formData.append('from_pulse', '');
-        formData.append(
-            'check_pin_auth',
-            $form.find('input[name=check_pin_auth]').val()
-        );
+        inputs = getInputs($form);
+        formData = {
+            ask_pin: smsToken,
+            hotel_id: inputs.hotel_id,
+            ses: inputs.ses,
+            account_id: inputs.account_id,
+            dest: inputs.dest,
+            pulse: 0,
+            pcip: '',
+            from_pulse: '',
+            check_pin_auth: inputs.check_pin_auth
+        };
         request_options = {
             url: secureBaseUrl + urlAction, // 2fa/confirm.html
             data: formData,
@@ -169,9 +186,17 @@ async function getCardFromReservation(
             headers: {
                 Accept:
                     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'content-type': 'application/x-www-form-urlencoded'
-            }
+                'content-type': 'application/x-www-form-urlencoded',
+                Referer: secureBaseUrl + response.request.path
+            },
+            transformRequest: [
+                (data, headers) => {
+                    delete headers.common['x-requested-with'];
+                    return makeFormPost(data);
+                }
+            ]
         };
+        console.log('Request: ' + request_options.url);
         response = await request(request_options);
         html = response.data;
     }
