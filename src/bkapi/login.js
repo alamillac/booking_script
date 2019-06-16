@@ -73,6 +73,27 @@ async function loginFirstStep(credentials, request) {
         { username, opToken, password, clientId },
         request
     );
+    if (signInResponse.redirect_uri !== undefined) {
+        //TODO implementar login sin 2FA
+
+        //WIP
+        // Redirect to home
+        const request_options = {
+            url: signInResponse.redirect_uri,
+            method: 'GET',
+            headers: {
+                Accept:
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            }
+        };
+        console.log('Request: ' + request_options.url);
+        response = await request(request_options);
+        html = response.data;
+        //WIP
+        throw new Error('Not implemented');
+    }
+
+    // 2FA is required
     const phones = signInResponse.phones_info.sms,
         authorizationToken = signInResponse.authorization_token;
 
@@ -82,7 +103,6 @@ async function loginFirstStep(credentials, request) {
         phoneHash = phoneInfo.hash;
 
     console.log('Init sms verification');
-    //TODO revisar en la respuesta si es necesaria la verificación
 
     // Send sms if needed
     const request_options = {
