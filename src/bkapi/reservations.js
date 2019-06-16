@@ -53,7 +53,6 @@ async function getCardFromReservation(
 
     // Get authorization url
     let request_options = {
-        //url: `${base_url}/hotel/hoteladmin/extranet_ng/manage/booking.html?res_id=${reservationId}&hotel_id=${hotelId}&lang=xu&ses=${session}&date_from=2019-06-10&date_to=2019-06-11&date_type=arrival`,
         url: `${base_url}/hotel/hoteladmin/extranet_ng/manage/booking.html?res_id=${reservationId}&hotel_id=${hotelId}&lang=xu&ses=${session}`,
         method: 'GET',
         headers: {
@@ -98,6 +97,7 @@ async function getCardFromReservation(
 
     if (html.includes('Please choose a verification method')) {
         // 2FA is required
+        console.log('2FA required');
         const { partialPhone } = credentials,
             secureBaseUrl = 'https://secure-admin.booking.com/2fa/';
 
@@ -107,7 +107,6 @@ async function getCardFromReservation(
             urlAction = $form.attr('action'),
             formData = new FormData();
 
-        //TODO function to get inputs from form
         formData.append('dest', $form.find('input[name=dest]').val());
         formData.append(
             'check_pin_auth',
@@ -132,14 +131,13 @@ async function getCardFromReservation(
             headers: {
                 Accept:
                     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'content-type': 'application/x-www-form-urlencoded'
             }
         };
         console.log('Request: ' + request_options.url);
         response = await request(request_options); // send sms token
         html = response.data;
 
-        console.log(html); //FIXME delete
         // Get sms and validate it
         $ = cheerio.load(html);
         $form = $('form#enter_security_pin');
@@ -171,7 +169,7 @@ async function getCardFromReservation(
             headers: {
                 Accept:
                     'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'content-type': 'application/x-www-form-urlencoded'
             }
         };
         response = await request(request_options);
