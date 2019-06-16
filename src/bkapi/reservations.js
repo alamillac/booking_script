@@ -1,13 +1,8 @@
 import { signIn, getAuthToken } from './login';
 import cheerio from 'cheerio';
+import queryString from 'query-string';
 
 const base_url = 'https://admin.booking.com';
-
-function makeFormPost(data) {
-    return Object.entries(data)
-        .map(([key, val]) => `${key}=${val}`)
-        .join('&');
-}
 
 function getAmount(strAmount) {
     return parseFloat(strAmount.replace(/[^0-9.]/g, ''));
@@ -154,7 +149,7 @@ async function getCardFromReservation(
             transformRequest: [
                 (data, headers) => {
                     delete headers.common['x-requested-with'];
-                    return makeFormPost(data);
+                    return queryString.stringify(data);
                 }
             ]
         };
@@ -192,7 +187,7 @@ async function getCardFromReservation(
             transformRequest: [
                 (data, headers) => {
                     delete headers.common['x-requested-with'];
-                    return makeFormPost(data);
+                    return queryString.stringify(data);
                 }
             ]
         };
@@ -254,7 +249,7 @@ async function getCardFromReservation(
         });
 
     if (cardDetails.availableBalance === 0) {
-        console.log(html);
+        console.warn('Posible error detected');
     }
     return cardDetails;
 }
