@@ -15,8 +15,7 @@ axiosCookieJarSupport(axios);
 function Booking(
     credentials,
     getSmsfn,
-    //cookiePath = '/tmp/bookingCookie.json'
-    cookiePath = null
+    cookiePath = '/tmp/bookingCookie.json'
 ) {
     let cookieJar;
     if (cookiePath) {

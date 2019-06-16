@@ -1,5 +1,27 @@
 const base_url = 'https://account.booking.com';
 
+function getSessionFromUrl(urlPath) {
+    // Get session from Home page
+    console.log('Getting session and token from home page');
+    const query = urlPath.split('?')[1];
+
+    const params = query.split('&').map(q => {
+            const key_val = q.split('=');
+            return {
+                key: key_val[0],
+                val: key_val[1]
+            };
+        }),
+        sessionParam = params.find(p => p.key == 'ses');
+
+    if (!sessionParam) {
+        throw new Error('Session not found in home page!');
+    }
+
+    console.log('Session found');
+    return sessionParam.val;
+}
+
 function getAuthToken(html) {
     console.log('Getting token');
     const token_regex = /\"op_token\":\"([^"]+)\"/,
@@ -74,29 +96,78 @@ async function loginFirstStep(credentials, request) {
         request
     );
     if (signInResponse.redirect_uri !== undefined) {
-        //TODO implementar login sin 2FA
+        // Login without 2FA
 
-        //WIP
-        // Redirect to home
-        const request_options = {
+        // Remove common headers
+        const commonHeaders = {
+            'content-type': request.defaults.headers['content-type'],
+            'x-requested-with':
+                request.defaults.headers['x-requested-with']
+        };
+        delete request.defaults.headers['content-type'];
+        delete request.defaults.headers['x-requested-with'];
+
+        // Init redirect
+        let request_options = {
             url: signInResponse.redirect_uri,
             method: 'GET',
             headers: {
                 Accept:
-                    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                Referer: 'https://account.booking.com/'
+            },
+            maxRedirects: 0,
+            validateStatus: function(status) {
+                return status === 302;
             }
         };
-        try {
-            console.log('Request: ' + request_options.url);
-            response = await request(request_options);
-        } catch (e) {
-            console.log(e);
-            throw new Error('Error in login redirect');
-        }
-        html = response.data;
-        //TODO get session from html
-        //WIP
-        throw new Error('Not implemented');
+        console.log('Request: ' + request_options.url);
+        response = await request(request_options);
+
+        request_options = {
+            url: response.headers.location,
+            method: 'GET',
+            headers: {
+                Accept:
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                Referer: 'https://account.booking.com/'
+            },
+            maxRedirects: 0,
+            validateStatus: function(status) {
+                return status === 302;
+            }
+        };
+        console.log('Request: ' + request_options.url);
+        response = await request(request_options);
+
+        // Redirect to home
+        request_options = {
+            url:
+                'https://admin.booking.com' +
+                response.headers.location, //Fix stupid redirection
+            method: 'GET',
+            headers: {
+                Accept:
+                    'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                Referer: 'https://account.booking.com/'
+            },
+            maxRedirects: 0
+        };
+        console.log('Request: ' + request_options.url);
+        response = await request(request_options);
+
+        // Set common headers
+        request.defaults.headers['content-type'] =
+            commonHeaders['content-type'];
+        request.defaults.headers['x-requested-with'] =
+            commonHeaders['x-requested-with'];
+
+        // Get session from response
+        const tokens = {
+                session: getSessionFromUrl(response.request.path)
+            },
+            smsRequired = false;
+        return { smsRequired, tokens };
     }
 
     // 2FA is required
@@ -158,27 +229,8 @@ async function loginSecondStep(options, request) {
     console.log('Request: ' + request_options.url);
     response = await request(request_options);
 
-    // Get session from Home page
-    console.log('Getting session and token from home page');
-    const url_path = response.request.path,
-        query = url_path.split('?')[1];
-
-    const params = query.split('&').map(q => {
-            const key_val = q.split('=');
-            return {
-                key: key_val[0],
-                val: key_val[1]
-            };
-        }),
-        sessionParam = params.find(p => p.key == 'ses');
-
-    if (!sessionParam) {
-        throw new Error('Session not found in home page!');
-    }
-
-    console.log('Session found');
     return {
-        session: sessionParam.val
+        session: getSessionFromUrl(response.request.path)
     };
 }
 
