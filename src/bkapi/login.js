@@ -244,6 +244,7 @@ async function login(credentials, getSms, request) {
     }
 
     const smsToken = await getSms();
+    console.log(`Token received: ${smsToken}`);
     tokens.smsToken = smsToken;
 
     return await loginSecondStep(tokens, request);

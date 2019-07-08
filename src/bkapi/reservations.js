@@ -162,6 +162,7 @@ async function getCardFromReservation(
         $form = $('form#enter_security_pin');
         urlAction = $form.attr('action');
         const smsToken = await getSms();
+        console.log(`Token received: ${smsToken}`);
         inputs = getInputs($form);
         formData = {
             ask_pin: smsToken,
